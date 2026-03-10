@@ -646,6 +646,17 @@ require('lazy').setup({
         },
       }
 
+      -- Check if JS/TS support is needed.
+      if vim.fn.executable('node') == 1 then
+        servers.ts_ls = {}
+        servers.prettierd = {} -- Formatter for JS/TS
+      end
+
+      -- Check if Python support is needed.
+      if vim.fn.executable('python3') == 1 then
+        servers.pyright = {}
+      end
+
       -- Ensure the servers and tools above are installed
       --
       -- To check the current status of installed tools and/or manually install
@@ -660,10 +671,17 @@ require('lazy').setup({
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      for name, server in pairs(servers) do
-        vim.lsp.config(name, server)
-        vim.lsp.enable(name)
-      end
+      local capabilities = require('blink.cmp').get_lsp_capabilities()
+
+      require('mason-lspconfig').setup {
+        handlers = {
+          function(server_name)
+            local server = servers[server_name] or {}
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            require('lspconfig')[server_name].setup(server)
+          end,
+        },
+      }
     end,
   },
 
@@ -706,6 +724,13 @@ require('lazy').setup({
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
     },
+    config = function(_, opts)
+      if vim.fn.executable('node') == 1 then
+        opts.formatters_by_ft.javascript = { 'prettierd' }
+        opts.formatters_by_ft.typescript = { 'prettierd' }
+      end
+      require('conform').setup(opts)
+    end,
   },
 
   { -- Autocompletion
@@ -878,6 +903,18 @@ require('lazy').setup({
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
     config = function()
       local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+      
+      -- Just add JS/TS parser if node is available.
+      if vim.fn.executable('node') == 1 then
+        table.insert(parsers, 'javascript')
+        table.insert(parsers, 'typescript')
+      end
+
+      -- Add Python parser if python3 is available.
+      if vim.fn.executable('python3') == 1 then
+        table.insert(parsers, 'python')
+      end
+
       require('nvim-treesitter').install(parsers)
       vim.api.nvim_create_autocmd('FileType', {
         callback = function(args)
