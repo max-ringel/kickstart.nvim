@@ -256,6 +256,20 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added via a link or github org/name. To run setup automatically, use `opts = {}`
+  {
+    "NeogitOrg/neogit",
+    lazy = true,
+    dependencies = {
+      "nvim-lua/plenary.nvim",         -- required
+
+      -- Only one of these is needed.
+      "sindrets/diffview.nvim",        -- optional
+    },
+    cmd = "Neogit",
+    keys = {
+      { "<leader>gg", "<cmd>Neogit<cr>", desc = "Open Neo[g]it" }
+    }
+  },
   { -- Toggleable terminal
     'akinsho/toggleterm.nvim',
     version = '*',
