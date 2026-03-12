@@ -268,7 +268,7 @@ require('lazy').setup({
       shell = 'zsh',
     },
     keys = {
-      { '<leader>tt', '<cmd>ToggleTerm<CR>', desc = '[T]oggle [T]erminal' },
+      { '<leader>j', '<cmd>ToggleTerm<CR>', desc = 'Toggle [J]erminal' },
     },
   },
   { 'NMAC427/guess-indent.nvim', opts = {} },
