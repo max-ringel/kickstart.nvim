@@ -257,6 +257,18 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added via a link or github org/name. To run setup automatically, use `opts = {}`
   {
+    'folke/snacks.nvim',
+    priority = 1000,
+    lazy = false,
+    opts = {
+      bigfile = { enabled = true },
+      input = { enabled = true },
+      notifier = { enabled = true },
+      quickfile = { enabled = true },
+      words = { enabled = true },
+    },
+  },
+  {
     'coder/claudecode.nvim',
     cond = function() return vim.fn.executable 'claude' == 1 end,
     dependencies = { 'folke/snacks.nvim' },
