@@ -350,8 +350,34 @@ require('lazy').setup({
     'coder/claudecode.nvim',
     enabled = vim.fn.executable 'claude' == 1,
     dependencies = { 'folke/snacks.nvim' },
-    config = true,
     lazy = false,
+    opts = {
+      terminal = {
+        snacks_win_opts = {
+          keys = {
+            term_normal = {
+              '<Esc>',
+              function()
+                vim.cmd 'stopinsert'
+              end,
+              mode = 't',
+              desc = 'Exit terminal mode',
+            },
+            term_send_esc = {
+              '<C-e>',
+              function()
+                local chan = vim.bo.channel
+                if chan and chan > 0 then
+                  vim.api.nvim_chan_send(chan, '\27')
+                end
+              end,
+              mode = 't',
+              desc = 'Send ESC to Claude Code',
+            },
+          },
+        },
+      },
+    },
     keys = {
       { '<leader>a', nil, desc = 'AI/Claude Code' },
       { '<leader>ac', '<cmd>ClaudeCode<cr>', desc = 'Toggle Claude' },
