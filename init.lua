@@ -98,6 +98,9 @@ vim.g.have_nerd_font = false
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
 
+-- Auto-reload buffers when files change on disk (e.g. when Claude Code edits them)
+vim.o.autoread = true
+
 -- Make line numbers default
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
@@ -115,6 +118,17 @@ vim.o.showmode = false
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
+vim.g.clipboard = {
+  name = 'OSC 52',
+  copy = {
+    ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+    ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+  },
+  paste = {
+    ['+'] = require('vim.ui.clipboard.osc52').paste '+',
+    ['*'] = require('vim.ui.clipboard.osc52').paste '*',
+  },
+}
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -230,6 +244,70 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function() vim.hl.on_yank() end,
 })
 
+-- Trigger checktime so autoread picks up external file changes (e.g. from Claude Code)
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter' }, {
+  pattern = '*',
+  callback = function()
+    if vim.fn.mode() ~= 'c' then
+      vim.cmd 'checktime'
+    end
+  end,
+})
+
+-- Instantly reload buffers when files change on disk using libuv fs_event watchers.
+-- This is especially useful when Claude Code edits files in the background.
+do
+  local watchers = {}
+
+  local function start_watcher(bufnr)
+    local path = vim.api.nvim_buf_get_name(bufnr)
+    if path == '' or not vim.uv.fs_stat(path) then return end
+    if watchers[bufnr] then return end
+
+    local handle = vim.uv.new_fs_event()
+    if not handle then return end
+
+    handle:start(path, {}, function(err, _, events)
+      if err then return end
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          vim.cmd('checktime ' .. bufnr)
+        end
+        -- Atomic writes (write-to-temp + rename) invalidate the inotify watch,
+        -- so restart the watcher after a rename event.
+        if events and events.rename then
+          if watchers[bufnr] then
+            watchers[bufnr]:stop()
+            watchers[bufnr]:close()
+            watchers[bufnr] = nil
+          end
+          vim.defer_fn(function() start_watcher(bufnr) end, 100)
+        end
+      end)
+    end)
+
+    watchers[bufnr] = handle
+  end
+
+  local function stop_watcher(bufnr)
+    if watchers[bufnr] then
+      watchers[bufnr]:stop()
+      watchers[bufnr]:close()
+      watchers[bufnr] = nil
+    end
+  end
+
+  vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNew', 'BufWritePost' }, {
+    pattern = '*',
+    callback = function(ev) start_watcher(ev.buf) end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+    pattern = '*',
+    callback = function(ev) stop_watcher(ev.buf) end,
+  })
+end
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -270,9 +348,10 @@ require('lazy').setup({
   },
   {
     'coder/claudecode.nvim',
-    cond = function() return vim.fn.executable 'claude' == 1 end,
+    enabled = vim.fn.executable 'claude' == 1,
     dependencies = { 'folke/snacks.nvim' },
     config = true,
+    lazy = false,
     keys = {
       { '<leader>a', nil, desc = 'AI/Claude Code' },
       { '<leader>ac', '<cmd>ClaudeCode<cr>', desc = 'Toggle Claude' },
@@ -282,13 +361,6 @@ require('lazy').setup({
       { '<leader>am', '<cmd>ClaudeCodeSelectModel<cr>', desc = 'Select Claude model' },
       { '<leader>ab', '<cmd>ClaudeCodeAdd %<cr>', desc = 'Add current buffer' },
       { '<leader>as', '<cmd>ClaudeCodeSend<cr>', mode = 'v', desc = 'Send to Claude' },
-      {
-        '<leader>as',
-        '<cmd>ClaudeCodeTreeAdd<cr>',
-        desc = 'Add file',
-        ft = { 'NvimTree', 'neo-tree', 'oil', 'minifiles', 'netrw' },
-      },
-      -- Diff management
       { '<leader>aa', '<cmd>ClaudeCodeDiffAccept<cr>', desc = 'Accept diff' },
       { '<leader>ad', '<cmd>ClaudeCodeDiffDeny<cr>', desc = 'Deny diff' },
     },
