@@ -257,18 +257,21 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added via a link or github org/name. To run setup automatically, use `opts = {}`
   {
-    "NeogitOrg/neogit",
+    'github/copilot.vim',
+  },
+  {
+    'NeogitOrg/neogit',
     lazy = true,
     dependencies = {
-      "nvim-lua/plenary.nvim",         -- required
+      'nvim-lua/plenary.nvim', -- required
 
       -- Only one of these is needed.
-      "sindrets/diffview.nvim",        -- optional
+      'sindrets/diffview.nvim', -- optional
     },
-    cmd = "Neogit",
+    cmd = 'Neogit',
     keys = {
-      { "<leader>gg", "<cmd>Neogit<cr>", desc = "Open Neo[g]it" }
-    }
+      { '<leader>gg', '<cmd>Neogit<cr>', desc = 'Open Neo[g]it' },
+    },
   },
   { -- Toggleable terminal
     'akinsho/toggleterm.nvim',
@@ -676,15 +679,13 @@ require('lazy').setup({
       }
 
       -- Check if JS/TS support is needed.
-      if vim.fn.executable('node') == 1 then
+      if vim.fn.executable 'node' == 1 then
         servers.ts_ls = {}
         servers.prettierd = {} -- Formatter for JS/TS
       end
 
       -- Check if Python support is needed.
-      if vim.fn.executable('python3') == 1 then
-        servers.pyright = {}
-      end
+      if vim.fn.executable 'python3' == 1 then servers.pyright = {} end
 
       -- Ensure the servers and tools above are installed
       --
@@ -754,7 +755,7 @@ require('lazy').setup({
       },
     },
     config = function(_, opts)
-      if vim.fn.executable('node') == 1 then
+      if vim.fn.executable 'node' == 1 then
         opts.formatters_by_ft.javascript = { 'prettierd' }
         opts.formatters_by_ft.typescript = { 'prettierd' }
       end
@@ -932,17 +933,15 @@ require('lazy').setup({
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
     config = function()
       local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
-      
+
       -- Just add JS/TS parser if node is available.
-      if vim.fn.executable('node') == 1 then
+      if vim.fn.executable 'node' == 1 then
         table.insert(parsers, 'javascript')
         table.insert(parsers, 'typescript')
       end
 
       -- Add Python parser if python3 is available.
-      if vim.fn.executable('python3') == 1 then
-        table.insert(parsers, 'python')
-      end
+      if vim.fn.executable 'python3' == 1 then table.insert(parsers, 'python') end
 
       require('nvim-treesitter').install(parsers)
       vim.api.nvim_create_autocmd('FileType', {
@@ -984,7 +983,7 @@ require('lazy').setup({
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
-  vim.keymap.set('n', '<leader>e', '<cmd>Neotree toggle<CR>', { desc = 'File [E]xplorer' })
+  vim.keymap.set('n', '<leader>e', '<cmd>Neotree toggle<CR>', { desc = 'File [E]xplorer' }),
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
