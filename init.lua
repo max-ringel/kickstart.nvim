@@ -225,6 +225,7 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<leader>w', '<C-w>', { desc = 'Window commands' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -248,9 +249,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter' }, {
   pattern = '*',
   callback = function()
-    if vim.fn.mode() ~= 'c' then
-      vim.cmd 'checktime'
-    end
+    if vim.fn.mode() ~= 'c' then vim.cmd 'checktime' end
   end,
 })
 
@@ -270,9 +269,7 @@ do
     handle:start(path, {}, function(err, _, events)
       if err then return end
       vim.schedule(function()
-        if vim.api.nvim_buf_is_valid(bufnr) then
-          vim.cmd('checktime ' .. bufnr)
-        end
+        if vim.api.nvim_buf_is_valid(bufnr) then vim.cmd('checktime ' .. bufnr) end
         -- Atomic writes (write-to-temp + rename) invalidate the inotify watch,
         -- so restart the watcher after a rename event.
         if events and events.rename then
@@ -357,9 +354,7 @@ require('lazy').setup({
           keys = {
             term_normal = {
               '<Esc>',
-              function()
-                vim.cmd 'stopinsert'
-              end,
+              function() vim.cmd 'stopinsert' end,
               mode = 't',
               desc = 'Exit terminal mode',
             },
@@ -367,9 +362,7 @@ require('lazy').setup({
               '<C-e>',
               function()
                 local chan = vim.bo.channel
-                if chan and chan > 0 then
-                  vim.api.nvim_chan_send(chan, '\27')
-                end
+                if chan and chan > 0 then vim.api.nvim_chan_send(chan, '\27') end
               end,
               mode = 't',
               desc = 'Send ESC to Claude Code',
@@ -485,6 +478,7 @@ require('lazy').setup({
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>w', group = '[W]indow' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
       },
